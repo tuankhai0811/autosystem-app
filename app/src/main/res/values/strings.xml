@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Automatic Systems</string>
+    <string name="pref_hidden_password"><![CDATA[&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;]]></string>
+    <string name="pref_header_general">General</string>
+    <string name="pref_header_authentication">Authentication</string>
+    <string name="pref_title_authentication">Use credentials</string>
+    <string name="pref_title_authentication_username">Username</string>
+    <string name="pref_title_authentication_password">Password</string>
+    <string name="pref_title_ipcam_url">Url</string>
+    <string name="pref_default_ipcam_url">http://192.121.142.39:80/mjpg/video.mjpg</string>
+</resources>
