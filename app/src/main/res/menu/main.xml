@@ -4,11 +4,12 @@
 
     <item
         android:id="@+id/menu_test"
+        android:visible="false"
         android:title="Test" />
     <item
         android:id="@+id/menu_camera"
         android:title="Camera" />
     <item
         android:id="@+id/menu_settings"
-        android:title="Settings" />
+        android:title="Cài đặt" />
 </menu>

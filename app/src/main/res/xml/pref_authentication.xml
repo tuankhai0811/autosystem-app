@@ -1,7 +1,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <SwitchPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="authentication"
         android:title="@string/pref_title_authentication"/>
 
@@ -11,6 +11,7 @@
         android:key="com.tuankhai.automaticsystem.SettingsActivity.PREF_AUTH_USERNAME"
         android:maxLines="1"
         android:selectAllOnFocus="true"
+        android:defaultValue="admin"
         android:singleLine="true"
         android:title="@string/pref_title_authentication_username"/>
 
@@ -20,6 +21,7 @@
         android:key="com.tuankhai.automaticsystem.SettingsActivity.PREF_AUTH_PASSWORD"
         android:selectAllOnFocus="true"
         android:singleLine="true"
+        android:defaultValue="Aa123456"
         android:title="@string/pref_title_authentication_password"/>
 
 </PreferenceScreen>

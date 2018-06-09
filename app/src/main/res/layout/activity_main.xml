@@ -36,11 +36,30 @@
         android:textColor="@android:color/white"
         android:textSize="@dimen/size_18sp" />
 
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="180dp">
+
+        <FrameLayout
+            android:id="@+id/video_surface_frame"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="true">
+
+            <ViewStub
+                android:id="@+id/surface_stub"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout="@layout/surface_view" />
+
+        </FrameLayout>
+    </FrameLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="@dimen/height_temp"
         android:orientation="horizontal"
-        android:paddingBottom="@dimen/params_15dp"
+        android:paddingBottom="@dimen/params_5dp"
         android:paddingLeft="@dimen/params_40dp"
         android:paddingRight="@dimen/params_40dp">
 
@@ -54,7 +73,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:paddingTop="@dimen/params_20dp"
+                android:paddingTop="@dimen/params_10dp"
                 android:text="Nhiệt độ"
                 android:textColor="@android:color/black"
                 android:textSize="@dimen/size_20sp" />
@@ -66,7 +85,7 @@
                 android:gravity="center"
                 android:text="N/A"
                 android:textColor="@android:color/holo_red_light"
-                android:textSize="@dimen/size_24sp" />
+                android:textSize="@dimen/size_20sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -79,7 +98,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:paddingTop="@dimen/params_20dp"
+                android:paddingTop="@dimen/params_10dp"
                 android:text="Độ ẩm"
                 android:textColor="@android:color/black"
                 android:textSize="@dimen/size_20sp" />
@@ -91,7 +110,7 @@
                 android:gravity="center"
                 android:text="N/A"
                 android:textColor="@android:color/holo_blue_light"
-                android:textSize="@dimen/size_24sp" />
+                android:textSize="@dimen/size_20sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -102,9 +121,8 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:minHeight="200dp">
+        android:layout_height="120dp"
+        android:gravity="center">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -124,9 +142,8 @@
                 app:wlv_progressValue="0"
                 app:wlv_round_rectangle="true"
                 app:wlv_shapeType="circle"
-                app:wlv_titleCenter="máy bơm"
                 app:wlv_titleCenterColor="@android:color/black"
-                app:wlv_titleCenterSize="24sp"
+                app:wlv_titleCenterSize="20sp"
                 app:wlv_triangle_direction="north"
                 app:wlv_waveAmplitude="20"
                 app:wlv_waveColor="@color/colorAccent"
@@ -145,7 +162,7 @@
                 android:id="@+id/btn_on"
                 android:layout_width="@dimen/width_button"
                 android:layout_height="@dimen/height_button"
-                android:layout_margin="@dimen/params_10dp"
+                android:layout_margin="@dimen/params_2dp"
                 android:enabled="true"
                 android:text="Bật"
                 android:textAllCaps="false"
@@ -156,7 +173,7 @@
                 android:id="@+id/btn_off"
                 android:layout_width="@dimen/width_button"
                 android:layout_height="@dimen/height_button"
-                android:layout_margin="@dimen/params_10dp"
+                android:layout_margin="@dimen/params_2dp"
                 android:enabled="false"
                 android:text="Tắt"
                 android:textAllCaps="false"
@@ -174,8 +191,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_horizontal|top"
-        android:orientation="horizontal"
-        android:paddingTop="@dimen/params_10dp">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/btn_auto"
@@ -191,7 +207,7 @@
             android:minWidth="90dp"
             android:text="Tự động"
             android:textAllCaps="false"
-            android:textSize="@dimen/size_18sp"
+            android:textSize="@dimen/size_16sp"
             android:theme="@style/MyButton" />
     </LinearLayout>
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="height_temp">100dp</dimen>
+    <dimen name="height_temp">80dp</dimen>
     <dimen name="params_10dp">10dp</dimen>
     <dimen name="size_18sp">18sp</dimen>
     <dimen name="size_16sp">16sp</dimen>
@@ -14,9 +14,11 @@
     <dimen name="params_30dp">30dp</dimen>
     <dimen name="params_25dp">25dp</dimen>
     <dimen name="width_button">80dp</dimen>
-    <dimen name="height_button">60dp</dimen>
+    <dimen name="height_button">50dp</dimen>
     <dimen name="params_5dp">5dp</dimen>
     <dimen name="params_50dp">50dp</dimen>
     <dimen name="size_24sp">24sp</dimen>
     <dimen name="size_22sp">22sp</dimen>
+    <dimen name="params_3dp">3dp</dimen>
+    <dimen name="params_2dp">2dp</dimen>
 </resources>

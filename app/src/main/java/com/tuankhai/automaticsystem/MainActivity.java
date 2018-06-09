@@ -1,18 +1,31 @@
 package com.tuankhai.automaticsystem;
 
+import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.PixelFormat;
+import android.net.Uri;
 import android.os.Build;
 import android.os.CountDownTimer;
+import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewStub;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,14 +35,23 @@ import com.github.nkzawa.socketio.client.Socket;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.videolan.libvlc.IVLCVout;
+import org.videolan.libvlc.LibVLC;
+import org.videolan.libvlc.Media;
+import org.videolan.libvlc.MediaPlayer;
 
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 
 import me.itangqi.waveloadingview.WaveLoadingView;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+import static com.tuankhai.automaticsystem.SettingsActivity.PREF_AUTH_PASSWORD;
+import static com.tuankhai.automaticsystem.SettingsActivity.PREF_AUTH_USERNAME;
+import static com.tuankhai.automaticsystem.SettingsActivity.PREF_IPCAM_URL;
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, IVLCVout.OnNewVideoLayoutListener {
 
     private Button btnOn, btnOff, btnAuto;
     private TextView txtTemp, txtHum, txtStatus;
@@ -44,6 +66,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private CountDownTimer countDownTimer;
     private Timer timer;
     private CusRunnable task;
+
+    //StreamVideo
+    private static final String TAG = "JavaActivity";
+    private static final int SURFACE_BEST_FIT = 0;
+    private static final int SURFACE_FIT_SCREEN = 1;
+    private static final int SURFACE_FILL = 2;
+    private static final int SURFACE_16_9 = 3;
+    private static final int SURFACE_4_3 = 4;
+    private static final int SURFACE_ORIGINAL = 5;
+    private static int CURRENT_SIZE = SURFACE_16_9;
+
+    private FrameLayout mVideoSurfaceFrame = null;
+    private SurfaceView mVideoSurface = null;
+    private SurfaceView mSubtitlesSurface = null;
+    private TextureView mVideoTexture = null;
+    private View mVideoView = null;
+
+    private final Handler mHandler = new Handler();
+    private View.OnLayoutChangeListener mOnLayoutChangeListener = null;
+
+    private LibVLC mLibVLC = null;
+    private MediaPlayer mMediaPlayer = null;
+    private int mVideoHeight = 0;
+    private int mVideoWidth = 0;
+    private int mVideoVisibleHeight = 0;
+    private int mVideoVisibleWidth = 0;
+    private int mVideoSarNum = 0;
+    private int mVideoSarDen = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +112,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         addControls();
+        initCamera();
+    }
+
+    private void initCamera() {
+        final ArrayList<String> args = new ArrayList<>();
+        args.add("-vvv");
+        mLibVLC = new LibVLC(this, args);
+        mMediaPlayer = new MediaPlayer(mLibVLC);
+
+        mVideoSurfaceFrame = findViewById(R.id.video_surface_frame);
+        ViewStub stub = findViewById(R.id.surface_stub);
+        mVideoSurface = (SurfaceView) stub.inflate();
+        mVideoView = mVideoSurface;
     }
 
     @Override
@@ -78,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(test);
                 break;
             case R.id.menu_camera:
-                Intent camera = new Intent(this, CameraActivity.class);
+                Intent camera = new Intent(this, StreamActivity.class);
                 startActivity(camera);
                 break;
             case R.id.menu_settings:
@@ -87,6 +150,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        final IVLCVout vlcVout = mMediaPlayer.getVLCVout();
+        if (mVideoSurface != null) {
+            vlcVout.setVideoView(mVideoSurface);
+            if (mSubtitlesSurface != null)
+                vlcVout.setSubtitlesView(mSubtitlesSurface);
+        } else
+            vlcVout.setVideoView(mVideoTexture);
+        vlcVout.attachViews(this);
+
+        Media media = new Media(mLibVLC, Uri.parse(getURL()));
+        mMediaPlayer.setMedia(media);
+        media.release();
+        mMediaPlayer.play();
+
+        if (mOnLayoutChangeListener == null) {
+            mOnLayoutChangeListener = new View.OnLayoutChangeListener() {
+                private final Runnable mRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        //updateVideoSurfaces();
+                    }
+                };
+
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right,
+                                           int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
+                        mHandler.removeCallbacks(mRunnable);
+                        mHandler.post(mRunnable);
+                    }
+                }
+            };
+        }
+        mVideoSurfaceFrame.addOnLayoutChangeListener(mOnLayoutChangeListener);
     }
 
     @Override
@@ -115,6 +217,218 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
+        if (mOnLayoutChangeListener != null) {
+            mVideoSurfaceFrame.removeOnLayoutChangeListener(mOnLayoutChangeListener);
+            mOnLayoutChangeListener = null;
+        }
+
+        mMediaPlayer.stop();
+
+        mMediaPlayer.getVLCVout().detachViews();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mMediaPlayer.release();
+        mLibVLC.release();
+    }
+
+    private void changeMediaPlayerLayout(int displayW, int displayH) {
+        /* Change the video placement using the MediaPlayer API */
+        switch (CURRENT_SIZE) {
+            case SURFACE_BEST_FIT:
+                mMediaPlayer.setAspectRatio(null);
+                mMediaPlayer.setScale(0);
+                break;
+            case SURFACE_FIT_SCREEN:
+            case SURFACE_FILL: {
+                Media.VideoTrack vtrack = mMediaPlayer.getCurrentVideoTrack();
+                if (vtrack == null)
+                    return;
+                final boolean videoSwapped = vtrack.orientation == Media.VideoTrack.Orientation.LeftBottom
+                        || vtrack.orientation == Media.VideoTrack.Orientation.RightTop;
+                if (CURRENT_SIZE == SURFACE_FIT_SCREEN) {
+                    int videoW = vtrack.width;
+                    int videoH = vtrack.height;
+
+                    if (videoSwapped) {
+                        int swap = videoW;
+                        videoW = videoH;
+                        videoH = swap;
+                    }
+                    if (vtrack.sarNum != vtrack.sarDen)
+                        videoW = videoW * vtrack.sarNum / vtrack.sarDen;
+
+                    float ar = videoW / (float) videoH;
+                    float dar = displayW / (float) displayH;
+
+                    float scale;
+                    if (dar >= ar)
+                        scale = displayW / (float) videoW; /* horizontal */
+                    else
+                        scale = displayH / (float) videoH; /* vertical */
+                    mMediaPlayer.setScale(scale);
+                    mMediaPlayer.setAspectRatio(null);
+                } else {
+                    mMediaPlayer.setScale(0);
+                    mMediaPlayer.setAspectRatio(!videoSwapped ? "" + displayW + ":" + displayH
+                            : "" + displayH + ":" + displayW);
+                }
+                break;
+            }
+            case SURFACE_16_9:
+                mMediaPlayer.setAspectRatio("16:9");
+                mMediaPlayer.setScale(0);
+                break;
+            case SURFACE_4_3:
+                mMediaPlayer.setAspectRatio("4:3");
+                mMediaPlayer.setScale(0);
+                break;
+            case SURFACE_ORIGINAL:
+                mMediaPlayer.setAspectRatio(null);
+                mMediaPlayer.setScale(1);
+                break;
+        }
+    }
+
+    private int dpToPx(int dp) {
+        Resources r = getResources();
+        float px = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp, r.getDisplayMetrics());
+        return (int) px;
+    }
+
+    private void updateVideoSurfaces() {
+        int sw = getWindow().getDecorView().getWidth();
+        int sh = getWindow().getDecorView().getHeight();
+
+        // sanity check
+        if (sw * sh == 0) {
+            Log.e(TAG, "Invalid surface size");
+            return;
+        }
+
+        mMediaPlayer.getVLCVout().setWindowSize(sw, sh);
+
+        ViewGroup.LayoutParams lp = mVideoView.getLayoutParams();
+        if (mVideoWidth * mVideoHeight == 0) {
+            /* Case of OpenGL vouts: handles the placement of the video using MediaPlayer API */
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            mVideoView.setLayoutParams(lp);
+            lp = mVideoSurfaceFrame.getLayoutParams();
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            mVideoSurfaceFrame.setLayoutParams(lp);
+            changeMediaPlayerLayout(sw, sh);
+            return;
+        }
+
+        if (lp.width == lp.height && lp.width == ViewGroup.LayoutParams.MATCH_PARENT) {
+            /* We handle the placement of the video using Android View LayoutParams */
+            mMediaPlayer.setAspectRatio(null);
+            mMediaPlayer.setScale(0);
+        }
+
+        double dw = sw, dh = sh;
+        final boolean isPortrait = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+
+        if (sw > sh && isPortrait || sw < sh && !isPortrait) {
+            dw = sh;
+            dh = sw;
+        }
+
+        // compute the aspect ratio
+        double ar, vw;
+        if (mVideoSarDen == mVideoSarNum) {
+            /* No indication about the density, assuming 1:1 */
+            vw = mVideoVisibleWidth;
+            ar = (double) mVideoVisibleWidth / (double) mVideoVisibleHeight;
+        } else {
+            /* Use the specified aspect ratio */
+            vw = mVideoVisibleWidth * (double) mVideoSarNum / mVideoSarDen;
+            ar = vw / mVideoVisibleHeight;
+        }
+
+        // compute the display aspect ratio
+        double dar = dw / dh;
+
+        switch (CURRENT_SIZE) {
+            case SURFACE_BEST_FIT:
+                if (dar < ar)
+                    dh = dw / ar;
+                else
+                    dw = dh * ar;
+                break;
+            case SURFACE_FIT_SCREEN:
+                if (dar >= ar)
+                    dh = dw / ar; /* horizontal */
+                else
+                    dw = dh * ar; /* vertical */
+                break;
+            case SURFACE_FILL:
+                break;
+            case SURFACE_16_9:
+                ar = 16.0 / 9.0;
+                if (dar < ar)
+                    dh = dw / ar;
+                else
+                    dw = dh * ar;
+                break;
+            case SURFACE_4_3:
+                ar = 4.0 / 3.0;
+                if (dar < ar)
+                    dh = dw / ar;
+                else
+                    dw = dh * ar;
+                break;
+            case SURFACE_ORIGINAL:
+                dh = mVideoVisibleHeight;
+                dw = vw;
+                break;
+        }
+
+        // set display size
+        lp.width = (int) Math.ceil(dw * mVideoWidth / mVideoVisibleWidth);
+        lp.height = (int) Math.ceil(dh * mVideoHeight / mVideoVisibleHeight);
+        mVideoView.setLayoutParams(lp);
+        if (mSubtitlesSurface != null)
+            mSubtitlesSurface.setLayoutParams(lp);
+
+        // set frame size (crop if necessary)
+        lp = mVideoSurfaceFrame.getLayoutParams();
+        lp.width = (int) Math.floor(dw);
+        lp.height = (int) Math.floor(dh);
+        mVideoSurfaceFrame.setLayoutParams(lp);
+
+        mVideoView.invalidate();
+        if (mSubtitlesSurface != null)
+            mSubtitlesSurface.invalidate();
+    }
+
+    private String getPreference(String key) {
+        return PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getString(key, "");
+    }
+
+    private boolean useAuth() {
+        return PreferenceManager
+                .getDefaultSharedPreferences(this)
+                .getBoolean("authentication", true);
+    }
+
+    private String getURL() {
+        String result;
+        if (useAuth()) {
+            result = "rtsp://" + getPreference(PREF_AUTH_USERNAME) + ":" + getPreference(PREF_AUTH_PASSWORD) + "@"
+                    + getPreference(PREF_IPCAM_URL);
+        } else {
+            result = "rtsp://" + getPreference(PREF_IPCAM_URL);
+        }
+        Log.e("status", result);
+        //return "http://download.blender.org/peach/bigbuckbunny_movies/BigBuckBunny_640x360.m4v";
+        return result;
     }
 
     private void removeEvents() {
@@ -290,12 +604,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         countDownTimer = new CountDownTimer(z * 1000, 1000) {
 
             public void onTick(long millisUntilFinished) {
-                mWaveLoadingView.setBottomTitle(z + "s");
+                mWaveLoadingView.setCenterTitle(z + "s");
                 z--;
             }
 
             public void onFinish() {
-                mWaveLoadingView.setBottomTitle("");
+                mWaveLoadingView.setCenterTitle("");
+                //stopAnimation();
             }
         };
         countDownTimer.start();
@@ -310,17 +625,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtStatus = findViewById(R.id.txt_status);
 
         mWaveLoadingView = findViewById(R.id.waveLoadingView);
-//        mWaveLoadingView.setShapeType(WaveLoadingView.ShapeType.CIRCLE);
-        //mWaveLoadingView.setTopTitle("Top Title");
-//        mWaveLoadingView.setCenterTitleColor(Color.GRAY);
-//        mWaveLoadingView.setBottomTitleSize(18);
-//        mWaveLoadingView.setProgressValue(80);
-//        mWaveLoadingView.setBorderWidth(10);
-//        mWaveLoadingView.setAmplitudeRatio(60);
-        //mWaveLoadingView.setWaveColor(Color.BLUE);
-        //mWaveLoadingView.setBorderColor(Color.BLUE);
-//        mWaveLoadingView.setTopTitleStrokeColor(Color.BLUE);
-//        mWaveLoadingView.setTopTitleStrokeWidth(1);
         mWaveLoadingView.setAnimDuration(3000);
         mWaveLoadingView.pauseAnimation();
         mWaveLoadingView.resumeAnimation();
@@ -345,15 +649,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void stopAnimation() {
         Log.e("status", "stopAnimation");
         try {
-            mWaveLoadingView.setCenterTitle("");
-            try {
-                countDownTimer.onFinish();
-                countDownTimer.cancel();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             timer.cancel();
-        } catch (NullPointerException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            countDownTimer.onFinish();
+            countDownTimer.cancel();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -418,12 +721,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             btnOn.setEnabled(false);
             btnOff.setEnabled(false);
         } else {
-            try {
-                countDownTimer.onFinish();
-                countDownTimer.cancel();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
             stopAnimation();
             btnAuto.setText("Tự động");
             btnOn.setEnabled(true);
@@ -438,30 +735,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void changeMotorOff() {
-        mWaveLoadingView.setCenterTitle("");
+        Log.e("status", "motorOff");
         stopAnimation();
-        try {
-            countDownTimer.onFinish();
-            countDownTimer.cancel();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         btnOn.setEnabled(true);
         btnOff.setEnabled(false);
         btnAuto.setEnabled(true);
+    }
+
+    @Override
+    public void onNewVideoLayout(IVLCVout vlcVout, int width, int height, int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
+        mVideoWidth = width;
+        mVideoHeight = height;
+        mVideoVisibleWidth = visibleWidth;
+        mVideoVisibleHeight = visibleHeight;
+        mVideoSarNum = sarNum;
+        mVideoSarDen = sarDen;
+        //updateVideoSurfaces();
     }
 
     public class CusRunnable implements Runnable {
 
         @Override
         synchronized public void run() {
-            if (flagMotor || flagAuto) {
+            if (flagMotor) {
                 progress += 10;
                 if (progress > 100) {
                     progress = 0;
                 }
                 mWaveLoadingView.setProgressValue(progress);
-                mWaveLoadingView.setCenterTitle("đang bơm");
             }
         }
     }
