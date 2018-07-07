@@ -13,7 +13,7 @@
     <dimen name="height_wave_progress">200dp</dimen>
     <dimen name="params_30dp">30dp</dimen>
     <dimen name="params_25dp">25dp</dimen>
-    <dimen name="width_button">80dp</dimen>
+    <dimen name="width_button">60dp</dimen>
     <dimen name="height_button">50dp</dimen>
     <dimen name="params_5dp">5dp</dimen>
     <dimen name="params_50dp">50dp</dimen>

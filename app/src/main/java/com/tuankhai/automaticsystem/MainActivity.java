@@ -53,19 +53,24 @@ import static com.tuankhai.automaticsystem.SettingsActivity.PREF_IPCAM_URL;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, IVLCVout.OnNewVideoLayoutListener {
 
-    private Button btnOn, btnOff, btnAuto;
+    private Button btnOn, btnOff, btnAuto, btnOn_2, btnOff_2;
     private TextView txtTemp, txtHum, txtStatus;
     private WaveLoadingView mWaveLoadingView;
+    private WaveLoadingView mWaveLoadingView_2;
 
     protected boolean flagOnline = false;
     protected boolean flagMotor = false;
+    protected boolean flagMotor_2 = false;
     protected boolean flagAuto = false;
     protected int z = 0;
     protected int progress = 0;
+    protected int progress_2 = 0;
 
     private CountDownTimer countDownTimer;
     private Timer timer;
+    private Timer timer_2;
     private CusRunnable task;
+    private CusRunnable_2 task_2;
 
     //StreamVideo
     private static final String TAG = "JavaActivity";
@@ -198,6 +203,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (flagMotor) {
             runAnimation();
         }
+        timer_2 = new Timer();
+        if (flagMotor_2) {
+            runAnimation_2();
+        }
         addEvents();
         CusApplication.mSocket.emit("requestmodelonline");
     }
@@ -214,6 +223,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         try {
             timer.cancel();
             timer = null;
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+        }
+        try {
+            timer_2.cancel();
+            timer_2 = null;
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -436,6 +451,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnOn.setOnClickListener(null);
         btnAuto.setOnClickListener(null);
 
+        btnOff_2.setOnClickListener(null);
+        btnOn_2.setOnClickListener(null);
+
         CusApplication.mSocket.off();
     }
 
@@ -443,6 +461,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnOff.setOnClickListener(this);
         btnOn.setOnClickListener(this);
         btnAuto.setOnClickListener(this);
+
+        btnOff_2.setOnClickListener(this);
+        btnOn_2.setOnClickListener(this);
 
         //Message Auto
         CusApplication.mSocket.on("serversendclient_4", new Emitter.Listener() {
@@ -476,6 +497,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void run() {
                         JSONObject object = (JSONObject) args[0];
                         try {
+                            //Motor 2
+                            String motor_2 = object.getString("motor_2");
+                            if (motor_2.equals("on") && flagMotor_2){
+
+                            } else if (motor_2.equals("off") && !flagMotor_2){
+
+                            } else {
+                                //Khong dong bo
+                                if (motor_2.equals("on")){
+                                    btnOn_2.performClick();
+                                } else {
+                                    btnOff_2.performClick();
+                                }
+                            }
+
+
                             String motor = object.getString("motor");
                             String auto = object.getString("auto");
                             String fmotor = flagMotor ? "on" : "off";
@@ -618,7 +655,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void addControls() {
         btnOn = findViewById(R.id.btn_on);
+        btnOn_2 = findViewById(R.id.btn_on_2);
         btnOff = findViewById(R.id.btn_off);
+        btnOff_2 = findViewById(R.id.btn_off_2);
         btnAuto = findViewById(R.id.btn_auto);
         txtHum = findViewById(R.id.txt_hum);
         txtTemp = findViewById(R.id.txt_temp);
@@ -631,7 +670,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mWaveLoadingView.cancelAnimation();
         mWaveLoadingView.startAnimation();
 
+        mWaveLoadingView_2 = findViewById(R.id.waveLoadingView_2);
+        mWaveLoadingView_2.setAnimDuration(3000);
+        mWaveLoadingView_2.pauseAnimation();
+        mWaveLoadingView_2.resumeAnimation();
+        mWaveLoadingView_2.cancelAnimation();
+        mWaveLoadingView_2.startAnimation();
+
         task = new CusRunnable();
+        task_2 = new CusRunnable_2();
     }
 
     synchronized private void runAnimation() {
@@ -661,10 +708,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    synchronized private void runAnimation_2() {
+        Log.e("status", "runAnimation_2");
+        timer_2.cancel();
+        timer_2 = new Timer();
+        timer_2.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                runOnUiThread(task_2);
+            }
+        }, 1000, 1000);
+    }
+
+    private void stopAnimation_2() {
+        Log.e("status", "stopAnimation_2");
+        try {
+            timer_2.cancel();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void onClick(View view) {
         if (!flagOnline) return;
         switch (view.getId()) {
+            case R.id.btn_on_2:
+                flagMotor_2 = true;
+                runAnimation_2();
+                JSONObject obj = new JSONObject();
+                try {
+                    obj.put("status", "on");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                CusApplication.mSocket.emit("clientsenddata_4", obj);
+                changeMotorOn_2();
+                break;
+            case R.id.btn_off_2:
+                flagMotor_2 = false;
+                JSONObject obj4 = new JSONObject();
+                try {
+                    obj4.put("status", "off");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                CusApplication.mSocket.emit("clientsenddata_4", obj4);
+                changeMotorOff_2();
+                break;
             case R.id.btn_on:
                 flagMotor = true;
                 runAnimation();
@@ -742,6 +833,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnAuto.setEnabled(true);
     }
 
+    private void changeMotorOn_2() {
+        btnOff_2.setEnabled(true);
+        btnOn_2.setEnabled(false);
+    }
+
+    private void changeMotorOff_2() {
+        Log.e("status", "motorOff_2");
+        stopAnimation_2();
+        btnOn_2.setEnabled(true);
+        btnOff_2.setEnabled(false);
+    }
+
     @Override
     public void onNewVideoLayout(IVLCVout vlcVout, int width, int height, int visibleWidth, int visibleHeight, int sarNum, int sarDen) {
         mVideoWidth = width;
@@ -763,6 +866,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     progress = 0;
                 }
                 mWaveLoadingView.setProgressValue(progress);
+            }
+        }
+    }
+
+    public class CusRunnable_2 implements Runnable {
+
+        @Override
+        synchronized public void run() {
+            if (flagMotor_2) {
+                progress_2 += 10;
+                if (progress_2 > 100) {
+                    progress_2 = 0;
+                }
+                mWaveLoadingView_2.setProgressValue(progress_2);
             }
         }
     }
