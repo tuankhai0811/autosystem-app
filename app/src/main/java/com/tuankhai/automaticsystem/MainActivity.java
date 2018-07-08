@@ -54,7 +54,7 @@ import static com.tuankhai.automaticsystem.SettingsActivity.PREF_IPCAM_URL;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, IVLCVout.OnNewVideoLayoutListener {
 
     private Button btnOn, btnOff, btnAuto, btnOn_2, btnOff_2;
-    private TextView txtTemp, txtHum, txtStatus;
+    private TextView txtTemp, txtHum, txtStatus, txtGround;
     private WaveLoadingView mWaveLoadingView;
     private WaveLoadingView mWaveLoadingView_2;
 
@@ -499,13 +499,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         try {
                             //Motor 2
                             String motor_2 = object.getString("motor_2");
-                            if (motor_2.equals("on") && flagMotor_2){
+                            if (motor_2.equals("on") && flagMotor_2) {
 
-                            } else if (motor_2.equals("off") && !flagMotor_2){
+                            } else if (motor_2.equals("off") && !flagMotor_2) {
 
                             } else {
                                 //Khong dong bo
-                                if (motor_2.equals("on")){
+                                if (motor_2.equals("on")) {
                                     btnOn_2.performClick();
                                 } else {
                                     btnOff_2.performClick();
@@ -559,6 +559,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             CusApplication.arrModel.add(new Model(object.getString("temp"), object.getString("hum")));
                             txtTemp.setText(object.getString("temp") + "°C");
                             txtHum.setText(object.getString("hum") + "%");
+                            txtGround.setText(object.getString("ground").equals("1") ? "Đất khô" : "Đất ẩm");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -662,6 +663,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         txtHum = findViewById(R.id.txt_hum);
         txtTemp = findViewById(R.id.txt_temp);
         txtStatus = findViewById(R.id.txt_status);
+        txtGround = findViewById(R.id.txt_hum_2);
 
         mWaveLoadingView = findViewById(R.id.waveLoadingView);
         mWaveLoadingView.setAnimDuration(3000);

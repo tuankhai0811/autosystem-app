@@ -59,9 +59,7 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/height_temp"
         android:orientation="horizontal"
-        android:paddingBottom="@dimen/params_5dp"
-        android:paddingLeft="@dimen/params_40dp"
-        android:paddingRight="@dimen/params_40dp">
+        android:paddingBottom="@dimen/params_5dp">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -76,7 +74,7 @@
                 android:paddingTop="@dimen/params_10dp"
                 android:text="Nhiệt độ"
                 android:textColor="@android:color/black"
-                android:textSize="@dimen/size_20sp" />
+                android:textSize="@dimen/size_18sp" />
 
             <TextView
                 android:id="@+id/txt_temp"
@@ -85,6 +83,32 @@
                 android:gravity="center"
                 android:text="N/A"
                 android:textColor="@android:color/holo_red_light"
+                android:textSize="@dimen/size_20sp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingTop="@dimen/params_10dp"
+                android:text="Độ ẩm (A)"
+                android:textColor="@android:color/black"
+                android:textSize="@dimen/size_18sp" />
+
+            <TextView
+                android:id="@+id/txt_hum"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="N/A"
+                android:textColor="@android:color/holo_blue_light"
                 android:textSize="@dimen/size_20sp" />
         </LinearLayout>
 
@@ -99,18 +123,18 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:paddingTop="@dimen/params_10dp"
-                android:text="Độ ẩm"
+                android:text="Độ ẩm (G)"
                 android:textColor="@android:color/black"
-                android:textSize="@dimen/size_20sp" />
+                android:textSize="@dimen/size_18sp" />
 
             <TextView
-                android:id="@+id/txt_hum"
+                android:id="@+id/txt_hum_2"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center"
-                android:text="N/A"
-                android:textColor="@android:color/holo_blue_light"
-                android:textSize="@dimen/size_20sp" />
+                android:text="-"
+                android:textColor="@android:color/holo_blue_dark"
+                android:textSize="@dimen/size_16sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -121,31 +145,34 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:orientation="horizontal"
+        android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/params_5dp"
-        android:layout_height="wrap_content">
+        android:orientation="horizontal">
+
         <TextView
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:gravity="center"
             android:text="Motor 1"
-            android:gravity="center"
             android:textColor="@android:color/black"
-            android:textSize="@dimen/size_16sp"
-            android:layout_height="wrap_content" />
+            android:textSize="@dimen/size_16sp" />
+
         <TextView
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Motor 2"
             android:gravity="center"
+            android:text="Motor 2"
             android:textColor="@android:color/black"
-            android:textSize="@dimen/size_16sp"
-            android:layout_height="wrap_content" />
+            android:textSize="@dimen/size_16sp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="120dp"
@@ -208,6 +235,7 @@
                     android:theme="@style/MyButton" />
             </LinearLayout>
         </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="120dp"
